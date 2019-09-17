@@ -40,17 +40,29 @@ class Pet extends Component<{}, { petList: PetInterface }> {
     this.incrementBehaviorTally.bind(this);
   }
 
-  renderButton = (props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory }): JSX.Element => {
+  renderTallyUp = (props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory }): JSX.Element => {
     return (
-      <Button onClick={() => this.incrementBehaviorTally(props)}>+</Button>
+      <Button modifier="outline" onClick={() => this.incrementBehaviorTally({ asc: true, ...props })}>+</Button>
+    )
+  }
+  renderTallyDn = (props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory }): JSX.Element => {
+    let disabled: boolean = this.state.petList.behaviors[props.behaviorCategory][props.behaviorInd].tally <= 0
+    return (
+      <Button modifier="outline" disabled={disabled} onClick={() => this.incrementBehaviorTally({ asc: false, ...props })}>-</Button>
     )
   }
 
-  incrementBehaviorTally(props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory }) {
+  incrementBehaviorTally(props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory, asc: boolean }) {
     this.setState((prevState) => {
       let oldP: PetInterface = prevState.petList;
       let oldB: Behavior[] = oldP.behaviors[props.behaviorCategory].slice();
+      if (props.asc) {
       oldB[props.behaviorInd].tally++
+      } else {
+        if (oldB[props.behaviorInd].tally > 0) {
+          oldB[props.behaviorInd].tally--
+        }
+      }
       oldP.behaviors[props.behaviorCategory] = oldB
       return ({
         petList: oldP
@@ -67,7 +79,9 @@ class Pet extends Component<{}, { petList: PetInterface }> {
         <tr key={rowkey + "-row"}>
           <td key={rowkey + "-des"}>{behavior.description}</td>
           <td key={rowkey + "-tally"}>{behavior.tally}</td>
-          <td key={rowkey + "-inc"}>{this.renderButton({ petInd: 0, behaviorInd: index, behaviorCategory: category })}</td>
+          <td key={rowkey + "-inc"}>
+            {this.renderTallyDn({ petInd: 0, behaviorInd: index, behaviorCategory: category })}
+            {this.renderTallyUp({ petInd: 0, behaviorInd: index, behaviorCategory: category })}</td>
         </tr>
       )
     });
@@ -95,7 +109,7 @@ class Pet extends Component<{}, { petList: PetInterface }> {
     )
 
     let tbl = <table>
-      <thead><tr key="behavior-headers"><th>Behavior</th><th>Tally</th><th>Add</th></tr></thead>
+      <thead><tr key="behavior-headers"><th>Behavior</th><th>Tally</th></tr></thead>
       <tbody>{tbody}</tbody>
     </table>
 
