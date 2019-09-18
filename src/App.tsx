@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import { Box, Grommet, Button, Heading, Collapsible, ResponsiveContext, Layer, Select } from 'grommet';
-import Icons from 'grommet-icons'
-import './App.css';
+import { Box, Grommet, Button, Heading, Collapsible, ResponsiveContext, Layer, Select, Tabs, Tab, TextInput } from 'grommet';
+import * as Icons from 'grommet-icons'
 import { PetInterface, Behavior, BehaviorCategory, PetClass, PetType } from './pet'
 import { BehaviorService } from './behavior.service'
 
@@ -16,7 +15,7 @@ let App: React.FC = () => {
   );
 }
 
-class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface }> {
+class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[], listofpets: string[] }> {
   // state: any;
   bS: BehaviorService;
   theme = {
@@ -31,7 +30,8 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface }>
     this.bS = new BehaviorService();
     this.state = {
       showSidebar: false,
-      petList: {
+      listofpets: ["test1", "test2"],
+      petList: [{
         petName: "",
         petType: "cat",
         petClass: "barbarian",
@@ -44,7 +44,7 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface }>
           class: this.bS.getBehaviorsForCategory("barbarian")
         }
 
-      }
+      }]
     };
     this.incrementBehaviorTally.bind(this);
   }
@@ -58,7 +58,7 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface }>
     )
   }
   renderTallyDn = (props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory }): JSX.Element => {
-    let active: boolean = this.state.petList.behaviors[props.behaviorCategory][props.behaviorInd].tally > 0
+    let active: boolean = this.state.petList[props.petInd].behaviors[props.behaviorCategory][props.behaviorInd].tally > 0
     return (
       <Button
         icon={<Icons.Subtract />}
@@ -70,24 +70,26 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface }>
 
   incrementBehaviorTally(props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory, asc: boolean }) {
     this.setState((prevState) => {
-      let oldP: PetInterface = prevState.petList;
-      let oldB: Behavior[] = oldP.behaviors[props.behaviorCategory].slice();
+      let newPL: PetInterface[] = prevState.petList.slice();
+      let newPet: PetInterface = newPL[props.petInd];
+      let newBehavior: Behavior[] = newPet.behaviors[props.behaviorCategory].slice();
       if (props.asc) {
-        oldB[props.behaviorInd].tally++
+        newBehavior[props.behaviorInd].tally++
       } else {
-        if (oldB[props.behaviorInd].tally > 0) {
-          oldB[props.behaviorInd].tally--
+        if (newBehavior[props.behaviorInd].tally > 0) {
+          newBehavior[props.behaviorInd].tally--
         }
       }
-      oldP.behaviors[props.behaviorCategory] = oldB
+      newPet.behaviors[props.behaviorCategory] = newBehavior
+      newPL[props.petInd] = newPet
       return ({
-        petList: oldP
+        petList: newPL
       })
     })
   }
 
-  renderBehaviorRow(category: BehaviorCategory) {
-    let categoryRowList = this.state.petList.behaviors[category];
+  renderBehaviorRow(props: { petInd: number, category: BehaviorCategory }) {
+    let categoryRowList = this.state.petList[props.petInd].behaviors[props.category];
     let tRowList = categoryRowList.map((behavior: Behavior, index: number) => {
       // let behavior = this.state.behaviors[index];
       let rowkey: string = behavior.description.replace(" ", "-");
@@ -96,31 +98,31 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface }>
           <td key={rowkey + "-des"}>{behavior.description}</td>
           <td key={rowkey + "-tally"}>{behavior.tally}</td>
           <td key={rowkey + "-inc"}>
-            {this.renderTallyDn({ petInd: 0, behaviorInd: index, behaviorCategory: category })}
-            {this.renderTallyUp({ petInd: 0, behaviorInd: index, behaviorCategory: category })}</td>
+            {this.renderTallyDn({ petInd: props.petInd, behaviorInd: index, behaviorCategory: props.category })}
+            {this.renderTallyUp({ petInd: props.petInd, behaviorInd: index, behaviorCategory: props.category })}</td>
         </tr>
       )
     });
-    let rowkey: string = category;
+    let rowkey: string = props.category;
 
     return (
       <React.Fragment>
         <tr key={rowkey + "-row"}>
-          <td key={rowkey + "-des"}>{category}</td>
+          <td key={rowkey + "-des"}>{props.category}</td>
         </tr>
         {tRowList}
       </React.Fragment>
     )
   }
 
-  renderBehaviorTable() {
+  renderBehaviorTable(props: { petInd: number }) {
 
     let tbody = (
       <React.Fragment>
-        {this.renderBehaviorRow("feeding")}
-        {this.renderBehaviorRow("vocalizations")}
-        {this.renderBehaviorRow("grooming")}
-        {this.renderBehaviorRow("class")}
+        {this.renderBehaviorRow({ category: "feeding", ...props })}
+        {this.renderBehaviorRow({ category: "vocalizations", ...props })}
+        {this.renderBehaviorRow({ category: "grooming", ...props })}
+        {this.renderBehaviorRow({ category: "class", ...props })}
       </React.Fragment>
     )
 
@@ -132,49 +134,78 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface }>
     return tbl;
   }
 
-  renderClassPicker() {
+  renderNameInput(props: { petInd: number }) {
+    return (
+      <TextInput
+        placeholder="name"
+        value={this.state.petList[props.petInd].petName}
+
+      />
+    )
+  }
+
+  renderClassPicker(props: { petInd: number }) {
     let classList: PetClass[] = this.bS.classList;
-    let classOptions = classList.map((petClass: string) => {
-      return (
-        <option key={petClass}>{petClass}</option>
-      )
-    });
 
     return (
-      <div>Class picker</div>
-      // onChange={(e) => this.setState((prevState) => {
-      //   let oldP: PetInterface = prevState.petList;
-
-      //   oldP.petClass = e.target.value
-      //   oldP.behaviors.class = this.bS.getBehaviorsForCategory(e.target.value)
-      //   return ({
-      //     petList: oldP
-      //   })
-      // })}
+      <Select
+        options={classList}
+        value={this.state.petList[props.petInd].petClass}
+        onChange={(e) => this.setState((prevState) => {
+          let newPL: PetInterface[] = prevState.petList.slice();
+          let oldP: PetInterface = newPL[props.petInd];
+          oldP.petClass = e.value
+          oldP.behaviors.class = this.bS.getBehaviorsForCategory(e.value)
+          newPL[props.petInd] = oldP
+          return ({
+            petList: newPL
+          })
+        })}
+      />
     )
   }
 
-  renderTypePicker() {
-    let typeList: PetType[] = this.bS.typeList;
-    let typeOptions = typeList.map((petType: string) => {
-      return (
-        <option key={petType}>{petType}</option>
-      )
-    });
+  renderTypePicker(props: { petInd: number }) {
+    let typeList: PetType[] = this.bS.typeList
 
     return (
-      <div>Type Picker</div>
-      // onChange={(e) => this.setState((prevState) => {
-      //   let oldP: PetInterface = prevState.petList;
-      //   oldP.petType = e.target.value
-      //   return ({
-      //     petList: oldP
-      //   })
-      // })}
+      <Select
+        options={typeList}
+        value={this.state.petList[props.petInd].petType}
+
+        onChange={(e) => this.setState((prevState) => {
+          let newPL: PetInterface[] = prevState.petList.slice();
+          let oldP: PetInterface = newPL[props.petInd];
+          oldP.petType = e.value
+          newPL[props.petInd] = oldP
+          return ({
+            petList: newPL
+          })
+        })}
+      />
     )
   }
 
-  render(): JSX.Element {
+  renderPetTabs() {
+
+    let petTabs = this.state.petList.map((pet: PetInterface, index: number) => {
+      return (
+        <Tab title={pet.petName}>
+          <Box flex>
+            {this.renderNameInput({ petInd: index })}
+            {this.renderTypePicker({ petInd: index })}
+            {this.renderClassPicker({ petInd: index })}
+            {this.renderBehaviorTable({ petInd: index })}
+          </Box>
+        </Tab>
+      )
+    });
+    return (<Tabs>
+      {petTabs}
+    </Tabs>)
+  }
+
+  renderHeader() {
     let AppBar = (props: any) => (
       <Box
         tag='header'
@@ -188,48 +219,72 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface }>
         {...props}
       />
     );
+    return (
+      <AppBar>
+        Hello Grommet!
+                <Heading level='3' margin='none'>My App</Heading>
+        <Button
+          icon={<Icons.Notification />}
+          onClick={() => this.setState(prevState => ({ showSidebar: !prevState.showSidebar }))}
+        />
+      </AppBar>)
+  }
 
+  renderSidebar(size: string) {
+
+    return (!this.state.showSidebar || size !== 'small') ? (
+      <Collapsible direction="horizontal" open={this.state.showSidebar}>
+        <Box
+          flex
+          width='medium'
+          background='light-2'
+          elevation='small'
+          align='center'
+          justify='center'
+        >
+          sidebar
+        </Box>
+      </Collapsible>
+    ) : (
+        <Layer>
+          <Box
+            background='light-2'
+            tag='header'
+            justify='end'
+            align='center'
+            direction='row'
+          >
+            <Button
+              icon={<Icons.FormClose />}
+              onClick={() => this.setState({ showSidebar: false })}
+            />
+          </Box>
+          <Box
+            fill
+            background='light-2'
+            align='center'
+            justify='center'
+          >
+            sidebar
+          </Box>
+        </Layer>)
+  }
+
+  renderInputs() {
+
+  }
+
+  render(): JSX.Element {
     return (
       <Grommet theme={this.theme} full>
         <ResponsiveContext.Consumer>
           {size => (
             <Box fill>
-              <AppBar>
-                Hello Grommet!
-                <Heading level='3' margin='none'>My App</Heading>
-                <Button
-                  icon={<Icons.Notification />}
-                  onClick={() => this.setState(prevState => ({ showSidebar: !prevState.showSidebar }))}
-                />
-              </AppBar>
+              {this.renderHeader()}
               <Box direction='row' flex overflow={{ horizontal: 'hidden' }}>
-                <Box flex align='center' justify='center'>
-                  app body
-                </Box>
-                {(!this.state.showSidebar || size !== 'small') ? (
-                  <Collapsible direction="horizontal" open={this.state.showSidebar}>
-                    <Box
-                      flex
-                      width='medium'
-                      background='light-2'
-                      elevation='small'
-                      align='center'
-                      justify='center'
-                    >
-                      sidebar
-                    </Box>
-                  </Collapsible>
-                ) : (
-                    <Layer>
-                      <Box
-                        fill
-                        background='light-2'
-                        align='center'
-                        justify='center'
-                      >
-                        sidebar
-                       </Box>
-                    </Layer>)}
+
+                {this.renderSidebar(size)}
+                {this.renderPetTabs()}
               </Box>
               {/* {this.renderTypePicker()} */}
               {/* {this.renderClassPicker()} */}
