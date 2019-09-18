@@ -1,10 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
 import Pet from './App';
 import * as serviceWorker from './serviceWorker';
-import 'onsenui/css/onsenui.css';
-import 'onsenui/css/onsen-css-components.css';
 
 ReactDOM.render(<Pet />, document.getElementById('root'));
 
