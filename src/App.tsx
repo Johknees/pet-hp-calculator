@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
+import { Box, Grommet, Button, Heading, Collapsible, ResponsiveContext, Layer, Select } from 'grommet';
+import Icons from 'grommet-icons'
 import './App.css';
-import { Button, Select } from 'react-onsenui'
 import { PetInterface, Behavior, BehaviorCategory, PetClass, PetType } from './pet'
 import { BehaviorService } from './behavior.service'
 
@@ -15,13 +16,21 @@ let App: React.FC = () => {
   );
 }
 
-class Pet extends Component<{}, { petList: PetInterface }> {
+class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface }> {
   // state: any;
   bS: BehaviorService;
+  theme = {
+    global: {
+      colors: {
+        brand: '#228BE6',
+      },
+    },
+  };
   constructor(props: any) {
     super(props);
     this.bS = new BehaviorService();
     this.state = {
+      showSidebar: false,
       petList: {
         petName: "",
         petType: "cat",
@@ -42,13 +51,20 @@ class Pet extends Component<{}, { petList: PetInterface }> {
 
   renderTallyUp = (props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory }): JSX.Element => {
     return (
-      <Button modifier="outline" onClick={() => this.incrementBehaviorTally({ asc: true, ...props })}>+</Button>
+      <Button
+        icon={<Icons.Add />}
+        onClick={() => this.incrementBehaviorTally({ asc: true, ...props })}
+      />
     )
   }
   renderTallyDn = (props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory }): JSX.Element => {
-    let disabled: boolean = this.state.petList.behaviors[props.behaviorCategory][props.behaviorInd].tally <= 0
+    let active: boolean = this.state.petList.behaviors[props.behaviorCategory][props.behaviorInd].tally > 0
     return (
-      <Button modifier="outline" disabled={disabled} onClick={() => this.incrementBehaviorTally({ asc: false, ...props })}>-</Button>
+      <Button
+        icon={<Icons.Subtract />}
+        active={active}
+        onClick={() => this.incrementBehaviorTally({ asc: false, ...props })}
+      />
     )
   }
 
@@ -57,7 +73,7 @@ class Pet extends Component<{}, { petList: PetInterface }> {
       let oldP: PetInterface = prevState.petList;
       let oldB: Behavior[] = oldP.behaviors[props.behaviorCategory].slice();
       if (props.asc) {
-      oldB[props.behaviorInd].tally++
+        oldB[props.behaviorInd].tally++
       } else {
         if (oldB[props.behaviorInd].tally > 0) {
           oldB[props.behaviorInd].tally--
@@ -125,19 +141,16 @@ class Pet extends Component<{}, { petList: PetInterface }> {
     });
 
     return (
-      <Select
-        value={this.state.petList.petClass}
-        onChange={(e) => this.setState((prevState) => {
-          let oldP: PetInterface = prevState.petList;
+      <div>Class picker</div>
+      // onChange={(e) => this.setState((prevState) => {
+      //   let oldP: PetInterface = prevState.petList;
 
-          oldP.petClass = e.target.value
-          oldP.behaviors.class = this.bS.getBehaviorsForCategory(e.target.value)
-          return ({
-            petList: oldP
-          })
-        })}>
-        {classOptions}
-      </ Select>
+      //   oldP.petClass = e.target.value
+      //   oldP.behaviors.class = this.bS.getBehaviorsForCategory(e.target.value)
+      //   return ({
+      //     petList: oldP
+      //   })
+      // })}
     )
   }
 
@@ -150,27 +163,83 @@ class Pet extends Component<{}, { petList: PetInterface }> {
     });
 
     return (
-      <Select
-        onChange={(e) => this.setState((prevState) => {
-          let oldP: PetInterface = prevState.petList;
-          oldP.petType = e.target.value
-          return ({
-            petList: oldP
-          })
-        })}>
-        {typeOptions}
-      </Select>
+      <div>Type Picker</div>
+      // onChange={(e) => this.setState((prevState) => {
+      //   let oldP: PetInterface = prevState.petList;
+      //   oldP.petType = e.target.value
+      //   return ({
+      //     petList: oldP
+      //   })
+      // })}
     )
   }
 
-
   render(): JSX.Element {
+    let AppBar = (props: any) => (
+      <Box
+        tag='header'
+        direction='row'
+        align='center'
+        justify='between'
+        background='brand'
+        pad={{ left: 'medium', right: 'small', vertical: 'small' }}
+        elevation='medium'
+        style={{ zIndex: '1' }}
+        {...props}
+      />
+    );
+
     return (
-      <div>
-        {this.renderTypePicker()}
-        {this.renderClassPicker()}
-        {this.renderBehaviorTable()}
-      </div>
+      <Grommet theme={this.theme} full>
+        <ResponsiveContext.Consumer>
+          {size => (
+            <Box fill>
+              <AppBar>
+                Hello Grommet!
+                <Heading level='3' margin='none'>My App</Heading>
+                <Button
+                  icon={<Icons.Notification />}
+                  onClick={() => this.setState(prevState => ({ showSidebar: !prevState.showSidebar }))}
+                />
+              </AppBar>
+              <Box direction='row' flex overflow={{ horizontal: 'hidden' }}>
+                <Box flex align='center' justify='center'>
+                  app body
+                </Box>
+                {(!this.state.showSidebar || size !== 'small') ? (
+                  <Collapsible direction="horizontal" open={this.state.showSidebar}>
+                    <Box
+                      flex
+                      width='medium'
+                      background='light-2'
+                      elevation='small'
+                      align='center'
+                      justify='center'
+                    >
+                      sidebar
+                    </Box>
+                  </Collapsible>
+                ) : (
+                    <Layer>
+                      <Box
+                        fill
+                        background='light-2'
+                        align='center'
+                        justify='center'
+                      >
+                        sidebar
+                       </Box>
+                    </Layer>)}
+              </Box>
+              {/* {this.renderTypePicker()} */}
+              {/* {this.renderClassPicker()} */}
+              {/* {this.renderBehaviorTable()} */}
+              {/* {this.renderToolbarPage()} */}
+              {/* {this.renderPetList("feeding")} */}
+            </Box >
+          )}
+        </ResponsiveContext.Consumer>
+      </Grommet >
     )
   }
 }
