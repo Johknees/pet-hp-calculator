@@ -251,6 +251,12 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
             this.setState({ showSidebar: true, curPet: props.pet, saveButtonAction: "edit" })
           }}
         />
+        <Button
+          icon={<Icons.Clear />}
+          onClick={() => {
+            this.setState({ showSidebar: true, curPet: props.pet, saveButtonAction: "edit" }, () => this.onRemoveItem())
+          }}
+        />
       </div>
     )
   }
@@ -348,6 +354,20 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
       };
     });
   };
+
+  onRemoveItem = () => {
+    this.setState(prevState => {
+      let newPL: PetInterface[] = prevState.petList.filter((pet) => {
+        return pet.id !== prevState.curPet.id
+      });
+      return {
+        petList: newPL,
+        curPet: this.emptyPet(),
+        showSidebar: false
+      };
+    });
+  };
+
   onEditItem = () => {
     this.setState(prevState => {
       let newPL: PetInterface[] = prevState.petList.map((pet) => {
@@ -404,6 +424,14 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
       <Button
         icon={<Icons.Save />}
         onClick={() => this.onEditItem()}
+      />
+    )
+  }
+  renderRemoveButton() {
+    return (
+      <Button
+        icon={<Icons.Clear />}
+        onClick={() => this.onRemoveItem()}
       />
     )
   }
