@@ -15,7 +15,7 @@ let App: React.FC = () => {
   );
 }
 
-class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[], listofpets: string[] }> {
+class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[], newPet: PetInterface }> {
   // state: any;
   bS: BehaviorService;
   theme = {
@@ -30,8 +30,8 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
     this.bS = new BehaviorService();
     this.state = {
       showSidebar: false,
-      listofpets: ["test1", "test2"],
-      petList: [{
+      petList: [],
+      newPet: {
         petName: "",
         petType: "cat",
         petClass: "barbarian",
@@ -43,8 +43,7 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
           grooming: this.bS.getBehaviorsForCategory("grooming"),
           class: this.bS.getBehaviorsForCategory("barbarian")
         }
-
-      }]
+      }
     };
     this.incrementBehaviorTally.bind(this);
   }
@@ -192,9 +191,7 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
       return (
         <Tab title={pet.petName}>
           <Box flex>
-            {this.renderNameInput({ petInd: index })}
-            {this.renderTypePicker({ petInd: index })}
-            {this.renderClassPicker({ petInd: index })}
+            {this.renderPetInfo({ petInd: index })}
             {this.renderBehaviorTable({ petInd: index })}
           </Box>
         </Tab>
@@ -203,6 +200,16 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
     return (<Tabs>
       {petTabs}
     </Tabs>)
+  }
+
+  renderPetInfo(props: { petInd: number }) {
+    return (
+      <React.Fragment>
+        {this.renderNameInput(props)}
+        {this.renderTypePicker(props)}
+        {this.renderClassPicker(props)}
+      </React.Fragment>
+    )
   }
 
   renderHeader() {
