@@ -15,7 +15,9 @@ let App: React.FC = () => {
   );
 }
 
-class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[], newPet: PetInterface }> {
+type saveButtonAction = "add" | "edit"
+
+class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: PetInterface[], curPet: PetInterface, saveButtonAction: saveButtonAction }> {
   // state: any;
   bS: BehaviorService;
   theme = {
@@ -29,12 +31,13 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
     super(props);
     this.bS = new BehaviorService();
     this.state = {
+      petId: 2,
       showSidebar: false,
-      petList: [],
-      newPet: {
-        petName: "",
-        petType: "cat",
-        petClass: "barbarian",
+      petList: [{
+        id: 0,
+        name: "Nacho",
+        type: "cat",
+        class: "barbarian",
         level: 0,
         duration: 0,
         behaviors: {
@@ -43,7 +46,35 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
           grooming: this.bS.getBehaviorsForCategory("grooming"),
           class: this.bS.getBehaviorsForCategory("barbarian")
         }
-      }
+      }, {
+        id: 1,
+        name: "Winnie",
+        type: "small mammal",
+        class: "rogue",
+        level: 0,
+        duration: 0,
+        behaviors: {
+          feeding: this.bS.getBehaviorsForCategory("feeding"),
+          vocalizations: this.bS.getBehaviorsForCategory("vocalizations"),
+          grooming: this.bS.getBehaviorsForCategory("grooming"),
+          class: this.bS.getBehaviorsForCategory("rogue")
+        }
+      }],
+      curPet: {
+        id: 2,
+        name: "tmp",
+        type: "cat",
+        class: "barbarian",
+        level: 0,
+        duration: 0,
+        behaviors: {
+          feeding: this.bS.getBehaviorsForCategory("feeding"),
+          vocalizations: this.bS.getBehaviorsForCategory("vocalizations"),
+          grooming: this.bS.getBehaviorsForCategory("grooming"),
+          class: this.bS.getBehaviorsForCategory("barbarian")
+        }
+      },
+      saveButtonAction: "add"
     };
     this.incrementBehaviorTally.bind(this);
   }
@@ -133,52 +164,59 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
     return tbl;
   }
 
-  renderNameInput(props: { petInd: number }) {
+  handleInput = (e: any) => {
+    let { value } = e.target
+    this.setState((prevState) => {
+      let newPet = prevState.curPet;
+      newPet.name = value;
+      return ({
+        curPet: newPet
+      })
+    })
+  }
+
+
+  renderNameInput() {
     return (
       <TextInput
         placeholder="name"
-        value={this.state.petList[props.petInd].petName}
-
+        value={this.state.curPet.name}
+        onChange={this.handleInput}
       />
     )
   }
 
-  renderClassPicker(props: { petInd: number }) {
+  renderClassPicker() {
     let classList: PetClass[] = this.bS.classList;
 
     return (
       <Select
         options={classList}
-        value={this.state.petList[props.petInd].petClass}
+        value={this.state.curPet.class}
+
         onChange={(e) => this.setState((prevState) => {
-          let newPL: PetInterface[] = prevState.petList.slice();
-          let oldP: PetInterface = newPL[props.petInd];
-          oldP.petClass = e.value
-          oldP.behaviors.class = this.bS.getBehaviorsForCategory(e.value)
-          newPL[props.petInd] = oldP
+          let newPet = prevState.curPet;
+          newPet.class = e.value;
           return ({
-            petList: newPL
+            curPet: newPet
           })
         })}
       />
     )
   }
 
-  renderTypePicker(props: { petInd: number }) {
+  renderTypePicker() {
     let typeList: PetType[] = this.bS.typeList
-
     return (
       <Select
         options={typeList}
-        value={this.state.petList[props.petInd].petType}
+        value={this.state.curPet.type}
 
         onChange={(e) => this.setState((prevState) => {
-          let newPL: PetInterface[] = prevState.petList.slice();
-          let oldP: PetInterface = newPL[props.petInd];
-          oldP.petType = e.value
-          newPL[props.petInd] = oldP
+          let newPet = prevState.curPet;
+          newPet.type = e.value;
           return ({
-            petList: newPL
+            curPet: newPet
           })
         })}
       />
@@ -189,9 +227,9 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
 
     let petTabs = this.state.petList.map((pet: PetInterface, index: number) => {
       return (
-        <Tab title={pet.petName}>
+        <Tab title={pet.name}>
           <Box flex>
-            {this.renderPetInfo({ petInd: index })}
+            {this.renderPetInfo({ pet: pet })}
             {this.renderBehaviorTable({ petInd: index })}
           </Box>
         </Tab>
@@ -202,14 +240,36 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
     </Tabs>)
   }
 
-  renderPetInfo(props: { petInd: number }) {
+  renderPetInfo(props: { pet: PetInterface }) {
     return (
-      <React.Fragment>
-        {this.renderNameInput(props)}
-        {this.renderTypePicker(props)}
-        {this.renderClassPicker(props)}
-      </React.Fragment>
+      <div>
+        {props.pet.name}<br />
+        {"Level: " + props.pet.level + " " + props.pet.type + " " + props.pet.class}
+        <Button
+          icon={<Icons.Edit />}
+          onClick={() => {
+            this.setState({ showSidebar: true, curPet: props.pet, saveButtonAction: "edit" })
+          }}
+        />
+      </div>
     )
+  }
+
+  emptyPet(): PetInterface {
+    return ({
+      id: this.state.petId,
+      name: "",
+      type: "cat",
+      class: "barbarian",
+      level: 0,
+      duration: 0,
+      behaviors: {
+        feeding: this.bS.getBehaviorsForCategory("feeding"),
+        vocalizations: this.bS.getBehaviorsForCategory("vocalizations"),
+        grooming: this.bS.getBehaviorsForCategory("grooming"),
+        class: this.bS.getBehaviorsForCategory("barbarian")
+      }
+    })
   }
 
   renderHeader() {
@@ -228,14 +288,15 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
     );
     return (
       <AppBar>
-        Hello Grommet!
-                <Heading level='3' margin='none'>My App</Heading>
+        <Heading level='3' margin='none'>Pet HP Calculator</Heading>
         <Button
-          icon={<Icons.Notification />}
-          onClick={() => this.setState(prevState => ({ showSidebar: !prevState.showSidebar }))}
+          icon={<Icons.AddCircle />}
+          onClick={() => this.setState(prevState => ({ showSidebar: !prevState.showSidebar, saveButtonAction: "add" }))}
         />
       </AppBar>)
   }
+
+
 
   renderSidebar(size: string) {
 
@@ -249,7 +310,7 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
           align='center'
           justify='center'
         >
-          sidebar
+          {this.renderInputs()}
         </Box>
       </Collapsible>
     ) : (
@@ -272,13 +333,79 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
             align='center'
             justify='center'
           >
-            sidebar
+            {this.renderInputs()}
           </Box>
         </Layer>)
   }
 
-  renderInputs() {
+  onAddItem = () => {
+    this.setState(prevState => {
+      let newPL: PetInterface[] = [...prevState.petList, prevState.curPet];
+      return {
+        petList: newPL,
+        curPet: this.emptyPet(),
+        showSidebar: false
+      };
+    });
+  };
+  onEditItem = () => {
+    this.setState(prevState => {
+      let newPL: PetInterface[] = prevState.petList.map((pet) => {
+        if (pet.id === prevState.curPet.id) {
+          pet = prevState.curPet
+        }
+        return pet
+      })
+      return {
+        petList: newPL,
+        curPet: this.emptyPet(),
+        showSidebar: false
+      };
+    });
+  };
 
+  renderInputs() {
+    return (
+      <React.Fragment>
+        {this.renderNameInput()}
+        {this.renderClassPicker()}
+        {this.renderTypePicker()}
+        {this.renderSaveButton()}
+      </React.Fragment>
+    )
+  }
+
+  renderSaveButton() {
+    let button: any;
+    switch (this.state.saveButtonAction) {
+      case "add":
+        button = this.renderAddSaveButton()
+        break;
+      case "edit":
+        button = this.renderEditSaveButton()
+        break;
+
+      default:
+        break;
+    }
+    return button;
+  }
+
+  renderAddSaveButton() {
+    return (
+      <Button
+        icon={<Icons.Add />}
+        onClick={() => this.onAddItem()}
+      />
+    )
+  }
+  renderEditSaveButton() {
+    return (
+      <Button
+        icon={<Icons.Save />}
+        onClick={() => this.onEditItem()}
+      />
+    )
   }
 
   render(): JSX.Element {
@@ -289,15 +416,11 @@ class Pet extends Component<{}, { showSidebar: boolean; petList: PetInterface[],
             <Box fill>
               {this.renderHeader()}
               <Box direction='row' flex overflow={{ horizontal: 'hidden' }}>
-
                 {this.renderSidebar(size)}
-                {this.renderPetTabs()}
+                <Box flex align="center">
+                  {this.renderPetTabs()}
+                </Box>
               </Box>
-              {/* {this.renderTypePicker()} */}
-              {/* {this.renderClassPicker()} */}
-              {/* {this.renderBehaviorTable()} */}
-              {/* {this.renderToolbarPage()} */}
-              {/* {this.renderPetList("feeding")} */}
             </Box >
           )}
         </ResponsiveContext.Consumer>

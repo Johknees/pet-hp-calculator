@@ -3,9 +3,10 @@ export type PetClass = "rogue" | "cleric" | "paladin" | "ranger" | "barbarian";
 export type PetType = "dog" | "cat" | "small mammal";
 
 export interface PetInterface {
-    petName: string;
-    petType: PetType;
-    petClass: PetClass;
+    id: number;
+    name: string;
+    type: PetType;
+    class: PetClass;
     level: number;
     duration: number;
     behaviors: PetBehaviorMap;
