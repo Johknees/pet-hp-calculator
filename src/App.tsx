@@ -3,8 +3,8 @@ import { Box, Grommet, Button, Heading, Collapsible, ResponsiveContext, Layer, S
 import * as Icons from 'grommet-icons'
 import { PetInterface, Behavior, BehaviorCategory, PetClass, PetType } from './pet'
 import { BehaviorService } from './behavior.service'
+import './App.css'
 
-// class OrgChart extends Component<{}, { activeIndex: number, data: ChartNode, text: string, file: File | undefined }>{
 let App: React.FC = () => {
 
   let pt: Pet = new Pet({});
@@ -15,7 +15,7 @@ let App: React.FC = () => {
   );
 }
 
-type saveButtonAction = "add" | "edit"
+type saveButtonAction = "add" | "edit";
 
 class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: PetInterface[], curPet: PetInterface, saveButtonAction: saveButtonAction }> {
   // state: any;
@@ -110,12 +110,44 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
           newBehavior[props.behaviorInd].tally--
         }
       }
-      newPet.behaviors[props.behaviorCategory] = newBehavior
+      newPet.behaviors[props.behaviorCategory] = newBehavior;
+      newPet.level = this.calculateLevel({ pet: newPet });
       newPL[props.petInd] = newPet
       return ({
         petList: newPL
       })
     })
+  }
+
+  calculateLevel(props: { pet: PetInterface }) {
+    let levelNom: number = 0;
+    levelNom += this.getLevelforBehavior(props.pet.behaviors.feeding);
+    levelNom += this.getLevelforBehavior(props.pet.behaviors.grooming);
+    levelNom += this.getLevelforBehavior(props.pet.behaviors.vocalizations);
+    levelNom += this.getLevelforBehavior(props.pet.behaviors.class);
+    let denom: number = props.pet.duration
+    if (props.pet.duration <= 0) {
+      denom = 1;
+    }
+    let level = Math.floor(levelNom / denom);
+
+    return level;
+  }
+
+  calculateHp(props: { pet: PetInterface }) {
+    let u = this.calculateLevel(props);
+    // b+(um)
+    let b = this.bS.getBaseHp({ class: props.pet.class, type: props.pet.type });
+    let m = this.bS.getLevelMod({ type: props.pet.type });
+    return b + (u * m)
+  }
+
+  getLevelforBehavior(behaviorList: Behavior[]) {
+    let level: number = 0;
+    behaviorList.forEach(behavior => {
+      level += (behavior.tally * behavior.weight);
+    });
+    return level;
   }
 
   renderBehaviorRow(props: { petInd: number, category: BehaviorCategory }) {
@@ -137,8 +169,8 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
 
     return (
       <React.Fragment>
-        <tr key={rowkey + "-row"}>
-          <td key={rowkey + "-des"}>{props.category}</td>
+        <tr className="behavior-category-row" key={rowkey + "-row"}>
+          <td key={rowkey + "-des"} className="behavior-category-title">{props.category}</td>
         </tr>
         {tRowList}
       </React.Fragment>
@@ -172,7 +204,7 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
       return ({
         curPet: newPet
       })
-    })
+    });
   }
 
 
@@ -182,6 +214,27 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
         placeholder="name"
         value={this.state.curPet.name}
         onChange={this.handleInput}
+      />
+    )
+  }
+
+  handleDurationInput = (e: any) => {
+    let { value } = e.target
+    this.setState((prevState) => {
+      let newPet = prevState.curPet;
+      newPet.duration = value;
+      return ({
+        curPet: newPet
+      })
+    });
+  }
+
+  renderDurationInput() {
+    return (
+      <TextInput
+        type="number"
+        value={this.state.curPet.duration}
+        onChange={this.handleDurationInput}
       />
     )
   }
@@ -241,20 +294,26 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
   }
 
   renderPetInfo(props: { pet: PetInterface }) {
+    let level = this.calculateLevel(props);
+    let hp = this.calculateHp(props);
+
     return (
       <div>
-        {props.pet.name}<br />
-        {"Level: " + props.pet.level + " " + props.pet.type + " " + props.pet.class}
+        <div className="pet-info">
+          {props.pet.name}<br />
+          {"Level " + level + " " + props.pet.type + " " + props.pet.class}<br />
+          {"HP: " + hp}
+        </div>
         <Button
           icon={<Icons.Edit />}
           onClick={() => {
-            this.setState({ showSidebar: true, curPet: props.pet, saveButtonAction: "edit" })
+            this.setState({ showSidebar: true, curPet: Object.assign({}, props.pet), saveButtonAction: "edit" })
           }}
         />
         <Button
           icon={<Icons.Clear />}
           onClick={() => {
-            this.setState({ showSidebar: true, curPet: props.pet, saveButtonAction: "edit" }, () => this.onRemoveItem())
+            this.setState({ showSidebar: true, curPet: Object.assign({}, props.pet) }, () => this.onRemoveItem())
           }}
         />
       </div>
@@ -297,7 +356,7 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
         <Heading level='3' margin='none'>Pet HP Calculator</Heading>
         <Button
           icon={<Icons.AddCircle />}
-          onClick={() => this.setState(prevState => ({ showSidebar: !prevState.showSidebar, saveButtonAction: "add" }))}
+          onClick={() => this.setState(prevState => ({ showSidebar: !prevState.showSidebar, curPet: this.emptyPet(), saveButtonAction: "add" }))}
         />
       </AppBar>)
   }
@@ -349,6 +408,7 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
       let newPL: PetInterface[] = [...prevState.petList, prevState.curPet];
       return {
         petList: newPL,
+        petId: prevState.petId + 1,
         curPet: this.emptyPet(),
         showSidebar: false
       };
@@ -390,6 +450,7 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
         {this.renderNameInput()}
         {this.renderClassPicker()}
         {this.renderTypePicker()}
+        {this.renderDurationInput()}
         {this.renderSaveButton()}
       </React.Fragment>
     )
