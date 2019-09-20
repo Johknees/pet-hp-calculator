@@ -121,7 +121,7 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
     // b+(um)
     let b = this.bS.getBaseHp({ class: props.pet.class, type: props.pet.type });
     let m = this.bS.getLevelMod({ type: props.pet.type });
-    return b + (u * m)
+    return Math.floor(b + (u * m));
   }
 
   getLevelforBehavior(behaviorList: Behavior[]) {
