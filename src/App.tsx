@@ -3,6 +3,7 @@ import { Box, Grommet, Button, Heading, Collapsible, ResponsiveContext, Layer, S
 import * as Icons from 'grommet-icons'
 import { PetInterface, Behavior, BehaviorCategory, PetClass, PetType } from './pet'
 import { BehaviorService } from './behavior.service'
+import { PetDetailsService } from './pet-details.service'
 import './App.css'
 
 let App: React.FC = () => {
@@ -20,6 +21,7 @@ type saveButtonAction = "add" | "edit";
 class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: PetInterface[], curPet: PetInterface, saveButtonAction: saveButtonAction }> {
   // state: any;
   bS: BehaviorService;
+  pS: PetDetailsService;
   theme = {
     global: {
       colors: {
@@ -30,43 +32,19 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
   constructor(props: any) {
     super(props);
     this.bS = new BehaviorService();
+    this.pS = new PetDetailsService();
     this.state = {
-      petId: 2,
+      petId: 0,
       showSidebar: false,
-      petList: [{
-        id: 0,
-        name: "Nacho",
-        type: "cat",
-        class: "barbarian",
-        level: 0,
-        duration: 0,
-        behaviors: {
-          feeding: this.bS.getBehaviorsForCategory("feeding"),
-          vocalizations: this.bS.getBehaviorsForCategory("vocalizations"),
-          grooming: this.bS.getBehaviorsForCategory("grooming"),
-          class: this.bS.getBehaviorsForCategory("barbarian")
-        }
-      }, {
-        id: 1,
-        name: "Winnie",
-        type: "small mammal",
-        class: "rogue",
-        level: 0,
-        duration: 0,
-        behaviors: {
-          feeding: this.bS.getBehaviorsForCategory("feeding"),
-          vocalizations: this.bS.getBehaviorsForCategory("vocalizations"),
-          grooming: this.bS.getBehaviorsForCategory("grooming"),
-          class: this.bS.getBehaviorsForCategory("rogue")
-        }
-      }],
+      petList: [],
       curPet: {
-        id: 2,
+        id: 0,
         name: "tmp",
         type: "cat",
         class: "barbarian",
         level: 0,
         duration: 0,
+        hp: 0,
         behaviors: {
           feeding: this.bS.getBehaviorsForCategory("feeding"),
           vocalizations: this.bS.getBehaviorsForCategory("vocalizations"),
@@ -77,6 +55,10 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
       saveButtonAction: "add"
     };
     this.incrementBehaviorTally.bind(this);
+  }
+
+  componentDidMount() {
+    this.setState(this.pS.petState);
   }
 
   renderTallyUp = (props: { petInd: number, behaviorInd: number, behaviorCategory: BehaviorCategory }): JSX.Element => {
@@ -328,6 +310,7 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
       class: "barbarian",
       level: 0,
       duration: 0,
+      hp: 0,
       behaviors: {
         feeding: this.bS.getBehaviorsForCategory("feeding"),
         vocalizations: this.bS.getBehaviorsForCategory("vocalizations"),
@@ -357,6 +340,10 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
         <Button
           icon={<Icons.AddCircle />}
           onClick={() => this.setState(prevState => ({ showSidebar: !prevState.showSidebar, curPet: this.emptyPet(), saveButtonAction: "add" }))}
+        />
+        <Button
+          icon={<Icons.Save />}
+          onClick={() => this.pS.update({ curPet: this.state.curPet, petId: this.state.petId, petList: this.state.petList })}
         />
       </AppBar>)
   }
@@ -432,6 +419,12 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
     this.setState(prevState => {
       let newPL: PetInterface[] = prevState.petList.map((pet) => {
         if (pet.id === prevState.curPet.id) {
+          let lvl: number = this.calculateLevel({ pet: prevState.curPet });
+          let hp: number = this.calculateHp({ pet: prevState.curPet });
+          let classBehavior: Behavior[] = this.bS.getBehaviorsForCategory(prevState.curPet.class)
+          prevState.curPet.level = lvl;
+          prevState.curPet.hp = hp;
+          prevState.curPet.behaviors.class = classBehavior;
           pet = prevState.curPet
         }
         return pet

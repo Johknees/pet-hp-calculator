@@ -8,6 +8,7 @@ export interface PetInterface {
     type: PetType;
     class: PetClass;
     level: number;
+    hp: number;
     duration: number;
     behaviors: PetBehaviorMap;
 }
@@ -15,6 +16,12 @@ export interface PetInterface {
 export type BehaviorCategory = keyof PetBehaviorMap;
 export type PetBaseHpEntryMap = {
     [key in PetType]: PetBaseHpEntry;
+}
+
+export interface PetState {
+    petId: number;
+    petList: PetInterface[];
+    curPet: PetInterface;
 }
 
 export type PetBaseHpEntry = {
