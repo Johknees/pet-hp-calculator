@@ -2,7 +2,7 @@
   "name": "pet-hp",
   "version": "1.1.0",
   "private": true,
-  "homepage": ".",
+  "homepage": "https://Johknees.github.io/pet-hp",
   "dependencies": {
     "@types/jest": "24.0.18",
     "@types/node": "12.7.5",
