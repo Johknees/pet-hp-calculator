@@ -262,8 +262,8 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
 
     let petTabs = this.state.petList.map((pet: PetInterface, index: number) => {
       return (
-        <Tab title={pet.name}>
-          <Box flex>
+        <Tab key={pet.id + "-tab"} title={pet.name}>
+          <Box key={pet.id + "info-box"} flex>
             {this.renderPetInfo({ pet: pet })}
             {this.renderBehaviorTable({ petInd: index })}
           </Box>
