@@ -1,0 +1,8 @@
+HP = b+(um)
+
+To do:
+- Make edit a form w/labels
+- Make edit a popover
+- Add class descriptors
+- Make save automatic - change save to export
+- Change css for +/- behavior buttons
