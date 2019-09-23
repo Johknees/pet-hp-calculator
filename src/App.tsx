@@ -232,6 +232,7 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
         onChange={(e) => this.setState((prevState) => {
           let newPet = prevState.curPet;
           newPet.class = e.value;
+          newPet.behaviors.class = this.bS.getBehaviorsForCategory(newPet.class);
           return ({
             curPet: newPet
           })
@@ -392,6 +393,7 @@ class Pet extends Component<{}, { petId: number; showSidebar: boolean; petList: 
 
   onAddItem = () => {
     this.setState(prevState => {
+      console.log(prevState.curPet);
       let newPL: PetInterface[] = [...prevState.petList, prevState.curPet];
       return {
         petList: newPL,
